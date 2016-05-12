@@ -262,7 +262,10 @@ class TeleMUDBot(telepot.Bot):
             return self.loaded_rooms[room_id]
         else:
             #print("= I had to load it.")
-            self.loaded_rooms[room_id] = Room.get(Room.id == room_id)
+            try:
+                self.loaded_rooms[room_id] = Room.get(Room.id == room_id)
+            except:
+                return None
 
         return self.loaded_rooms[room_id]
     
