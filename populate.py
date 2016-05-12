@@ -23,13 +23,32 @@ street1 = {"name" : "street1",
            "can be reached by by ascending the stone steps leading up the hill. "
          }
 
+street2 = {"name" : "street2",
+           "desc" : "The street continues north and east " \
+           "between quaint little cottages with flowerbeds in their " \
+           "front yards. " \
+           "Across a low stone wall to the west lies a peaceful pond. "
+           }
+
+street3 = {"name" : "street3",
+           "desc" : "This narrow, twisty street continues south and west " \
+           "among buildings of different kinds on each side. " \
+           "To the north, behind some other buildings, lies what looks to "
+           "be a windmill of some description. "
+           }
+
+street4 = {"name" : "street4",
+           "desc" : "The street runs north and south. " \
+           "On a hill to the west there is a small temple. "
+           }
+
 cemetery1 = {"name" : "cemetery1",
              "desc" : "This spooky cemetery seems to be largely abandoned. " \
              "There are cracked tombstones everywhere, covered with moss. " \
              "A temple is visible to the north."
              }
 
-town = [ temple1, cemetery1, street1 ]
+town = [ temple1, cemetery1, street1, street2, street3, street4]
 
 if __name__ == "__main__":
     try:
@@ -49,14 +68,28 @@ if __name__ == "__main__":
     temple1   = Room.get(Room.name == "temple1")
     cemetery1 = Room.get(Room.name == "cemetery1")
     street1   = Room.get(Room.name == "street1")
+    street2   = Room.get(Room.name == "street2")
+    street3   = Room.get(Room.name == "street3")
+    street4   = Room.get(Room.name == "street4")
 
-    temple1.north = street1
-    temple1.south = cemetery1
+    temple1.north   = street1
+    temple1.east    = street4
+    temple1.south   = cemetery1
 
     cemetery1.north = temple1
-    
-    street1.south = temple1
 
-    for room in [ temple1, cemetery1, street1 ]:
+    street1.east    = street3
+    street1.south   = temple1
+    street1.west    = street2
+
+    street2.east    = street1
+
+    street3.west    = street1
+    street3.south   = street4
+
+    street4.north   = street3
+    street4.west    = temple1
+
+    for room in [ temple1, cemetery1, street1, street2, street3, street4 ]:
         room.save()
 
