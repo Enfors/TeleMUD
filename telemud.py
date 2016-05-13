@@ -28,6 +28,17 @@ class TeleMUDBot(telepot.Bot):
             "help"    : self.do_help,
         }
 
+        self.global_aliases = {
+            "north"   : "go north",
+            "n"       : "go north",
+            "east"    : "go east",
+            "e"       : "go east",
+            "south"   : "go south",
+            "s"       : "go south",
+            "west"    : "go west",
+            "w"       : "go west",
+        }
+
         self.login_room = self.find_room_by_id(1)
 
 
@@ -108,7 +119,10 @@ class TeleMUDBot(telepot.Bot):
         if len(words) > 1: # If there are more words, the rest are args.
             args = words[1:]
         else:
-            args = None
+            args = []
+
+        # Expand aliases ("s" turns into "go south", etc)
+        command, args = self.expand_aliases(command, args)
 
         # Check if the command is valid.
         if not self.is_valid_command(user, command, args):
@@ -121,6 +135,20 @@ class TeleMUDBot(telepot.Bot):
         # can send it to the user.
         return output
 
+
+    def expand_aliases(self, command, args):
+        if command in self.global_aliases:
+            expanded_alias = self.global_aliases[command]
+
+            words = expanded_alias.split(" ")
+
+            command = words[0]
+
+            if len(words) > 1:
+                args = words[1:] + args
+
+        return command, args    
+    
             
     def user_login(self, user_name, chat_id):
 
@@ -526,7 +554,7 @@ class User(Living):
         output = ""
 
         self.bot = bot
-        self.keyboard = keyboard.Keyboard(bot)
+        self.keyboard = keyboard.BigKeyboard(bot)
         self.show_keyboard = True
         
         if first_login:

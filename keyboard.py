@@ -24,3 +24,15 @@ class Keyboard:
                              reply_markup = { "hide_keyboard": True })
         return None
     
+
+
+class BigKeyboard(Keyboard):
+
+    def __init__(self, bot):
+        super().__init__(bot)
+
+        self.buttons = [["Say",    "North",   "Shout",   "Attack"  ],
+                        ["West",   "Look",    "East",    "Objects" ],
+                        ["Status", "South",   "Hide",    "Search", ],
+                        ["Prev",   "Who",     "Help",    "Next"    ]]
+        
