@@ -23,10 +23,17 @@ class TeleMUDBot(telepot.Bot):
             "go"      : self.do_go,
             "say"     : self.do_say,
             "attack"  : self.do_attack,
+            "status"  : self.do_status,
             "objects" : self.do_objects,
             "help"    : self.do_help,
         }
 
+        self.login_room = self.find_room_by_id(1)
+
+
+    def get_login_room(self):
+        return self.login_room
+        
 
     def handle(self, msg):
 
@@ -117,16 +124,22 @@ class TeleMUDBot(telepot.Bot):
             
     def user_login(self, user_name, chat_id):
 
+        first_login = False
         output = ""
-        
-        login_room = self.find_room_by_id(1)
 
-        new_user = User()
+        try:
+            new_user = self.find_user_in_database_by_name(user_name)
+        except:
+            new_user = User()
+            new_user.set_name(user_name)
+            new_user.set_chat_id(chat_id)
+            first_login = True
+
         new_user.input_func = None
         
-        output += new_user.login(self, user_name, chat_id)
+        output += new_user.login(self, first_login)
 
-        login_room.receive_obj(new_user)
+        self.login_room.receive_obj(new_user)
 
         output += self.do_look(new_user)
 
@@ -143,6 +156,7 @@ class TeleMUDBot(telepot.Bot):
     
     
     # Command functions
+    # todo: move these to user / living
     def do_look(self, doer, command = "look", args = []):
 
         output = ""
@@ -227,9 +241,32 @@ class TeleMUDBot(telepot.Bot):
         
 
     def do_attack(self, doer, command = "attack", args = []):
-        return "[Attack: not implemented]"
+        output = ""
+
+        room = self.environment(doer)
+
+        content = room.get_content()
+
+        for obj in content:
+            if obj is not doer and obj.get_hp() > 0:
+                output += "%s kicks %s in the face!\n" % (doer.get_name(),
+                                                          obj.get_name())
+                new_hp = obj.change_hp(-3)
+                if new_hp == 0:
+                    room.receive_text("%s has died!" % obj)
+                    
+
+        if len(output) < 1:
+            return "Sadly, there is noone here to attack. "
+
+        doer.environment().receive_text(output)
+        return ""
 
 
+    def do_status(self, doer, command = "status", args = []):
+        return "Hit points: %d of %d." % (doer.get_hp(), doer.get_max_hp())
+
+    
     def do_objects(self, doer, command = "objects", args = []):
         return "[Objects: not implemented]"
 
@@ -297,7 +334,7 @@ class TeleMUDBot(telepot.Bot):
         return dest_room
     
 
-    def find_user_in_database(self, name):
+    def find_user_in_database_by_name(self, name):
         return User.get(User.name == name)
 
 
@@ -321,7 +358,8 @@ class Obj(Model):
 #        except AttributeError:
 #            return "An object of which the author forgot to " \
 #                "provide a description. "
-
+    def environment(self):
+        return self.room
 
 
 class Container(Obj):
@@ -422,36 +460,97 @@ class Room(Container):
         database = database
 
 
+
+class Living(Container):
+
+    def get_hp(self):
+        return self.hp
+
+
+    def get_max_hp(self):
+        return self.max_hp
+
+
+    def set_hp(self, hp):
+        if hp < 0:
+            hp = 0
+
+        if hp > self.get_max_hp():
+            hp = self.get_max_hp()
         
-class User(Container):
+        self.hp = hp
+
+        new_hp = hp
+        
+        if self.hp == 0:
+            self.die()
+        
+        return new_hp
+    
+
+    def set_max_hp(self, max_hp):
+        self.max_hp = max_hp
+        return self.max_hp
+
+
+    def change_hp(self, change):
+        new_hp = self.set_hp(self.get_hp() + change)
+        return new_hp
+
+    
+    def move_to(self, new_room):
+
+        starting_room = self.environment()
+
+        if starting_room:
+            starting_room.remove_obj(self)
+
+        new_room.receive_obj(self)
+        return True
+    
+
+    def die(self):
+        pass
+
+    
+        
+class User(Living):
     name    = CharField(unique = True)
     chat_id = IntegerField(unique = True)
     room    = ForeignKeyField(Room, null = True)
+    hp      = IntegerField()
+    max_hp  = IntegerField()
 
-    def login(self, bot, name, chat_id):
+    def login(self, bot, first_login = False):
 
         output = ""
-        
-        try: # If user already exists in the database:
-            self.get(User.name == name)
-        except:
-            output += "Ah, your first visit I see. "
-            self.name    = name
-            self.chat_id = chat_id
-            self.save()
 
-        self.name    = name
-        self.chat_id = chat_id
         self.bot = bot
-        self.set_keyboard(keyboard.Keyboard(bot))
+        self.keyboard = keyboard.Keyboard(bot)
         self.show_keyboard = True
-            
+        
+        if first_login:
+            output += "Ah, your first login I see! "
+            self.set_max_hp(10)
+            self.set_hp(10)
+
         output += "Welcome to TeleMUD!\n\n"
 
         return output
+    
 
+    def set_name(self, name):
+        self.name = name
+        return name
+
+    
     def get_name(self):
         return self.name
+
+
+    def set_chat_id(self, chat_id):
+        self.chat_id = chat_id
+        return chat_id
     
 
     def get_chat_id(self):
@@ -479,10 +578,24 @@ class User(Container):
         self.input_func = None
         return None
     
-    
+
+    def die(self):
+        print("%s has died." % self)
+        self.receive_text("You have died!")
+        self.move_to(self.bot.get_login_room())
+        self.receive_text(self.bot.do_look(self))
+        self.set_hp(self.get_max_hp())
+
+
+    # todo: Maybe remove this function and replace with receive_text()
+    # below?
     def on_text(self, text):
         self.bot.sendMessage(self.chat_id, text)
 
+
+    def receive_text(self, text):
+        self.on_text(text)
+        
     
     def __str__(self):
         return self.name + " (player)"

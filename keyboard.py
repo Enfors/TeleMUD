@@ -7,7 +7,7 @@ class Keyboard:
         self.text    = "What do you want to do?"
         self.buttons = [[ "Say",     "Go north",  "Attack"  ],
                         [ "Go west", "Look",      "Go east" ],
-                        [ "Objects", "Go south",  "Help"    ]]
+                        [ "Status",  "Go south",  "Help"    ]]
         return None
 
     
