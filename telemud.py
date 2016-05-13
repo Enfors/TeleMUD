@@ -24,6 +24,7 @@ class TeleMUDBot(telepot.Bot):
             "say"     : self.do_say,
             "attack"  : self.do_attack,
             "status"  : self.do_status,
+            "who"     : self.do_who,
             "objects" : self.do_objects,
             "help"    : self.do_help,
         }
@@ -295,6 +296,12 @@ class TeleMUDBot(telepot.Bot):
 
     def do_status(self, doer, command = "status", args = []):
         return "Hit points: %d of %d." % (doer.get_hp(), doer.get_max_hp())
+
+
+    def do_who(self, doer, command = "who", args = []):
+        output = "The following people are online:\n"
+        output += ", ".join(online_users)
+        return output
 
     
     def do_objects(self, doer, command = "objects", args = []):
