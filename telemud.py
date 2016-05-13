@@ -37,6 +37,8 @@ class TeleMUDBot(telepot.Bot):
             "s"       : "go south",
             "west"    : "go west",
             "w"       : "go west",
+
+            "l"       : "look",
         }
 
         self.login_room = self.find_room_by_id(1)
