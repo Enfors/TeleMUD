@@ -570,6 +570,7 @@ class User(Living):
             output += "Ah, your first login I see! "
             self.set_max_hp(10)
             self.set_hp(10)
+            self.save()
 
         output += "Welcome to TeleMUD!\n\n"
 
