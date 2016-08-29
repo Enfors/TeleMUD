@@ -20,7 +20,7 @@ street1 = {"name" : "street1",
            "desc" : "A narrow street running east and west, " \
            "just north of the temple. " \
            "Buildings block movement to the north, but the temple " \
-           "can be reached by by ascending the stone steps leading up the hill. "
+           "can be reached by ascending the stone steps leading up the hill. "
          }
 
 street2 = {"name" : "street2",
